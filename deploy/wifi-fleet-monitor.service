@@ -1,0 +1,26 @@
+[Unit]
+Description=WiFi Fleet Monitor FastAPI service
+After=network.target
+
+[Service]
+Type=simple
+User=wifi-fleet-monitor
+Group=wifi-fleet
+WorkingDirectory=/opt/wifi-fleet-monitor
+EnvironmentFile=/opt/wifi-fleet-monitor/.env
+RuntimeDirectory=wifi-fleet-monitor
+RuntimeDirectoryMode=0755
+UMask=0007
+ExecStartPre=/usr/bin/rm -f /run/wifi-fleet-monitor/uvicorn.sock
+ExecStart=/opt/wifi-fleet-monitor/.venv/bin/uvicorn app.main:app --uds /run/wifi-fleet-monitor/uvicorn.sock --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/wifi-fleet-monitor/app /opt/wifi-fleet-monitor/.env /opt/wifi-fleet-monitor/.venv
+ReadWritePaths=/opt/wifi-fleet-monitor/data /run/wifi-fleet-monitor
+
+[Install]
+WantedBy=multi-user.target
