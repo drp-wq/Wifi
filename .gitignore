@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+deploy_key
+deploy_key.pub
+data/
+.pytest_cache/
