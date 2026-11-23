@@ -1,0 +1,40 @@
+name: Deploy WiFi Fleet Monitor
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Configure SSH
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/known_hosts
+
+      - name: Upload application source
+        run: |
+          rsync -az --delete \
+            --exclude='.env' --exclude='data/' --exclude='.venv/' --exclude='deploy_key*' \
+            -e 'ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes' \
+            ./ root@187.52.118.25:/tmp/wifi-fleet-monitor-deploy/
+
+      - name: Install or update service
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes root@187.52.118.25 \
+            'bash /tmp/wifi-fleet-monitor-deploy/scripts/install_ubuntu.sh'
